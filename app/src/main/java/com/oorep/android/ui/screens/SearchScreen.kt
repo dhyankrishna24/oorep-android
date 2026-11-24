@@ -43,10 +43,11 @@ fun SearchScreen(
 
     var selectedRemedyForModal by remember { mutableStateOf<RemedyGrade?>(null) }
     val scope = rememberCoroutineScope()
+    val isDbReady by dbHelper.isReady.collectAsState()
 
     // Trigger search
     fun performSearch() {
-        if (searchQuery.isBlank()) {
+        if (!isDbReady || searchQuery.isBlank()) {
             rubrics = emptyList()
             return
         }
@@ -65,8 +66,10 @@ fun SearchScreen(
         }
     }
 
-    LaunchedEffect(selectedRepertory) {
-        performSearch()
+    LaunchedEffect(selectedRepertory, isDbReady) {
+        if (isDbReady) {
+            performSearch()
+        }
     }
 
     Scaffold(

@@ -38,9 +38,12 @@ fun BrowseScreen(
     var isLoading by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
+    val isDbReady by dbHelper.isReady.collectAsState()
 
-    LaunchedEffect(Unit) {
-        chapters = dbHelper.getChapters("publicum")
+    LaunchedEffect(isDbReady) {
+        if (isDbReady) {
+            chapters = dbHelper.getChapters("publicum")
+        }
     }
 
     Scaffold(

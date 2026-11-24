@@ -1,6 +1,7 @@
 package com.oorep.android.ui.theme
 
 import android.app.Activity
+import android.content.ContextWrapper
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -51,9 +52,16 @@ fun OorepTheme(
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.background.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            var ctx = view.context
+            while (ctx is ContextWrapper) {
+                if (ctx is Activity) {
+                    val window = ctx.window
+                    window.statusBarColor = colorScheme.background.toArgb()
+                    WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+                    break
+                }
+                ctx = ctx.baseContext
+            }
         }
     }
 

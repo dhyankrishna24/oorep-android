@@ -26,12 +26,15 @@ fun OorepNavHost() {
     var activeCase by remember { mutableStateOf<PatientCase?>(null) }
     var activeCaseRubrics by remember { mutableStateOf<List<CaseRubric>>(emptyList()) }
     var mmSearchQuery by remember { mutableStateOf("") }
+    val isDbReady by dbHelper.isReady.collectAsState()
 
     // Load or initialize default patient case
-    LaunchedEffect(Unit) {
-        val caze = dbHelper.getOrCreateDefaultCase()
-        activeCase = caze
-        activeCaseRubrics = dbHelper.getCaseRubrics(caze.id)
+    LaunchedEffect(isDbReady) {
+        if (isDbReady) {
+            val caze = dbHelper.getOrCreateDefaultCase()
+            activeCase = caze
+            activeCaseRubrics = dbHelper.getCaseRubrics(caze.id)
+        }
     }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()

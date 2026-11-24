@@ -37,15 +37,19 @@ fun MMScreen(
     var isLoading by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
+    val isDbReady by dbHelper.isReady.collectAsState()
 
     fun loadChapters() {
+        if (!isDbReady) return
         scope.launch {
             chapters = dbHelper.getMateriaMedicaChapters(searchQuery)
         }
     }
 
-    LaunchedEffect(Unit) {
-        loadChapters()
+    LaunchedEffect(isDbReady) {
+        if (isDbReady) {
+            loadChapters()
+        }
     }
 
     LaunchedEffect(initialQuery) {
