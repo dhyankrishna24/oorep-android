@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">OOREP</string>
+    <string name="tab_search">Search</string>
+    <string name="tab_browse">Browse</string>
+    <string name="tab_repertorize">Repertorize</string>
+    <string name="tab_mm">Materia Medica</string>
+    <string name="tab_settings">Settings</string>
+</resources>

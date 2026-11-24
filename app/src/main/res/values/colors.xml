@@ -1,0 +1,8 @@
+<resources>
+    <color name="teal_primary">#006A60</color>
+    <color name="teal_on_primary">#FFFFFF</color>
+    <color name="teal_container">#73F8E6</color>
+    <color name="teal_on_container">#00201C</color>
+    <color name="background_light">#FBFDFB</color>
+    <color name="background_dark">#191C1B</color>
+</resources>
