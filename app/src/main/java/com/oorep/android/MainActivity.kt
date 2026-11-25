@@ -1,20 +1,22 @@
 package com.oorep.android
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -31,28 +33,94 @@ class MainActivity : ComponentActivity() {
         }
         super.onCreate(savedInstanceState)
 
+        // Check if there was a previous uncaught crash log
+        val prefs = getSharedPreferences("oorep_crash", Context.MODE_PRIVATE)
+        val lastCrash = prefs.getString("last_crash", null)
+
         setContent {
             OorepTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val app = OorepApplication.instance
-                    val isReady by app.databaseHelper.isReady.collectAsState()
-                    val progress by app.databaseHelper.initProgress.collectAsState()
-                    val statusMessage by app.databaseHelper.statusMessage.collectAsState()
+                    var fatalError by remember { mutableStateOf<String?>(lastCrash) }
 
-                    LaunchedEffect(Unit) {
-                        app.databaseHelper.initializeDatabase()
-                    }
-
-                    if (isReady) {
-                        OorepNavHost()
+                    if (fatalError != null) {
+                        ErrorScreen(
+                            errorText = fatalError!!,
+                            onDismiss = {
+                                prefs.edit().remove("last_crash").commit()
+                                fatalError = null
+                            }
+                        )
                     } else {
-                        SplashScreen(progress = progress, message = statusMessage)
+                        val app = OorepApplication.instance
+                        val isReady by app.databaseHelper.isReady.collectAsState()
+                        val progress by app.databaseHelper.initProgress.collectAsState()
+                        val statusMessage by app.databaseHelper.statusMessage.collectAsState()
+
+                        LaunchedEffect(Unit) {
+                            try {
+                                app.databaseHelper.initializeDatabase()
+                            } catch (e: Throwable) {
+                                fatalError = e.stackTraceToString()
+                            }
+                        }
+
+                        if (isReady) {
+                            OorepNavHost()
+                        } else {
+                            SplashScreen(progress = progress, message = statusMessage)
+                        }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun ErrorScreen(errorText: String, onDismiss: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "⚠️",
+            fontSize = 44.sp
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            text = "App Initialization Notice",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.error
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        ElevatedCard(
+            colors = CardDefaults.elevatedCardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            ),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = errorText,
+                fontFamily = FontFamily.Monospace,
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(14.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(20.dp))
+        Button(
+            onClick = onDismiss,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Clear & Retry")
         }
     }
 }

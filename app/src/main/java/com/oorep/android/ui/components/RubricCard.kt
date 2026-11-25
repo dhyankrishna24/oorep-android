@@ -25,12 +25,27 @@ import com.oorep.android.data.model.Rubric
 @Composable
 fun RubricCard(
     rubric: Rubric,
-    remedies: List<RemedyGrade>,
     isAddedToCase: Boolean,
     onAddToCase: () -> Unit,
+    onLoadRemedies: suspend () -> List<RemedyGrade>,
     onRemedyClick: (RemedyGrade) -> Unit = {}
 ) {
     var expanded by remember { mutableStateOf(false) }
+    var remedies by remember { mutableStateOf<List<RemedyGrade>>(emptyList()) }
+    var isLoadingRemedies by remember { mutableStateOf(false) }
+
+    LaunchedEffect(expanded) {
+        if (expanded && remedies.isEmpty()) {
+            isLoadingRemedies = true
+            try {
+                remedies = onLoadRemedies()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                isLoadingRemedies = false
+            }
+        }
+    }
 
     ElevatedCard(
         shape = RoundedCornerShape(16.dp),
@@ -102,7 +117,7 @@ fun RubricCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "${remedies.size} remedies",
+                    text = if (expanded && remedies.isNotEmpty()) "${remedies.size} remedies" else "Tap to view remedies",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Medium
@@ -120,9 +135,15 @@ fun RubricCard(
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    if (remedies.isEmpty()) {
+                    if (isLoadingRemedies) {
                         Text(
                             text = "Loading remedies...",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else if (remedies.isEmpty()) {
+                        Text(
+                            text = "No remedies found for this rubric.",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

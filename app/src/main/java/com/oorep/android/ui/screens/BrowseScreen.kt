@@ -145,9 +145,9 @@ fun BrowseScreen(
                             val isAdded = activeCaseRubrics.any { it.abbrev == rubric.abbrev && it.rubricId == rubric.id }
                             RubricCard(
                                 rubric = rubric,
-                                remedies = emptyList(),
                                 isAddedToCase = isAdded,
-                                onAddToCase = { onAddRubricToCase(rubric) }
+                                onAddToCase = { onAddRubricToCase(rubric) },
+                                onLoadRemedies = { dbHelper.getRemediesForRubric(rubric.abbrev, rubric.id) }
                             )
                         }
                     }

@@ -1,7 +1,6 @@
 package com.oorep.android.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,9 +14,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.oorep.android.data.db.DatabaseHelper
@@ -38,7 +34,6 @@ fun SearchScreen(
     var searchQuery by remember { mutableStateOf("head pain") }
     var selectedRepertory by remember { mutableStateOf<String?>("publicum") }
     var rubrics by remember { mutableStateOf<List<Rubric>>(emptyList()) }
-    var remediesMap by remember { mutableStateOf<Map<Int, List<RemedyGrade>>>(emptyMap()) }
     var isSearching by remember { mutableStateOf(false) }
 
     var selectedRemedyForModal by remember { mutableStateOf<RemedyGrade?>(null) }
@@ -53,16 +48,14 @@ fun SearchScreen(
         }
         isSearching = true
         scope.launch {
-            val results = dbHelper.searchRubrics(searchQuery, selectedRepertory, null, limit = 50)
-            rubrics = results
-            isSearching = false
-
-            // Preload remedies for visible results
-            val newMap = mutableMapOf<Int, List<RemedyGrade>>()
-            for (r in results.take(15)) {
-                newMap[r.id] = dbHelper.getRemediesForRubric(r.abbrev, r.id)
+            try {
+                val results = dbHelper.searchRubrics(searchQuery, selectedRepertory, null, limit = 50)
+                rubrics = results
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                isSearching = false
             }
-            remediesMap = newMap
         }
     }
 
@@ -183,22 +176,13 @@ fun SearchScreen(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(rubrics, key = { "${it.abbrev}_${it.id}" }) { rubric ->
-                        // Load remedies on demand if not yet cached
-                        val remedies = remediesMap[rubric.id] ?: run {
-                            LaunchedEffect(rubric.id) {
-                                val loaded = dbHelper.getRemediesForRubric(rubric.abbrev, rubric.id)
-                                remediesMap = remediesMap + (rubric.id to loaded)
-                            }
-                            emptyList()
-                        }
-
                         val isAdded = activeCaseRubrics.any { it.abbrev == rubric.abbrev && it.rubricId == rubric.id }
 
                         RubricCard(
                             rubric = rubric,
-                            remedies = remedies,
                             isAddedToCase = isAdded,
                             onAddToCase = { onAddRubricToCase(rubric) },
+                            onLoadRemedies = { dbHelper.getRemediesForRubric(rubric.abbrev, rubric.id) },
                             onRemedyClick = { selectedRemedyForModal = it }
                         )
                     }
@@ -218,7 +202,7 @@ fun SearchScreen(
                         Text(
                             text = remedy.nameAbbrev,
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                         )
                         remedy.nameLong?.let { longName ->
                             Text(
@@ -232,7 +216,7 @@ fun SearchScreen(
                         Text(
                             text = "Repertory Grade: ${remedy.weight}",
                             style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
                         )
                         Spacer(modifier = Modifier.height(24.dp))
                         Button(
