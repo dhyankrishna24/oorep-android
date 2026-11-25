@@ -35,7 +35,7 @@ fun SearchScreen(
     onAddRubricToCase: (Rubric) -> Unit,
     onNavigateToMM: (String) -> Unit
 ) {
-    var searchQuery by remember { mutableStateOf("headache morning") }
+    var searchQuery by remember { mutableStateOf("head pain") }
     var selectedRepertory by remember { mutableStateOf<String?>("publicum") }
     var rubrics by remember { mutableStateOf<List<Rubric>>(emptyList()) }
     var remediesMap by remember { mutableStateOf<Map<Int, List<RemedyGrade>>>(emptyMap()) }
@@ -87,7 +87,7 @@ fun SearchScreen(
                         searchQuery = it
                         performSearch()
                     },
-                    placeholder = { Text("Search symptoms (e.g. headache morning)") },
+                    placeholder = { Text("Search symptoms (e.g. head pain, cough, fear)") },
                     leadingIcon = {
                         Icon(Icons.Default.Search, contentDescription = "Search")
                     },
